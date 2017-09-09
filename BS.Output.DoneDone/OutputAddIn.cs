@@ -43,8 +43,11 @@ namespace BS.Output.DoneDone
                                  "Screenshot",
                                  String.Empty, 
                                  true,
-                                 String.Empty,
-                                 "1");
+                                 0,
+                                 0,
+                                 0,
+                                 0,
+                                 1);
 
       return EditOutput(Owner, output);
 
@@ -68,6 +71,9 @@ namespace BS.Output.DoneDone
                           edit.FileFormat,
                           edit.OpenItemInBrowser,
                           Output.LastProjectID,
+                          Output.LastPriorityLevelID,
+                          Output.LastFixerID,
+                          Output.LastTesterID,
                           Output.LastIssueID);
       }
       else
@@ -89,8 +95,11 @@ namespace BS.Output.DoneDone
       outputValues.Add(new OutputValue("OpenItemInBrowser", Convert.ToString(Output.OpenItemInBrowser)));
       outputValues.Add(new OutputValue("FileName", Output.FileName));
       outputValues.Add(new OutputValue("FileFormat", Output.FileFormat));
-      outputValues.Add(new OutputValue("LastProjectID", Output.LastProjectID));
-      outputValues.Add(new OutputValue("LastIssueID", Output.LastIssueID));
+      outputValues.Add(new OutputValue("LastProjectID", Output.LastProjectID.ToString()));
+      outputValues.Add(new OutputValue("LastPriorityLevelID", Output.LastPriorityLevelID.ToString()));
+      outputValues.Add(new OutputValue("LastFixerID", Output.LastFixerID.ToString()));
+      outputValues.Add(new OutputValue("LastTesterID", Output.LastTesterID.ToString()));
+      outputValues.Add(new OutputValue("LastIssueID", Output.LastIssueID.ToString()));
 
       return outputValues;
       
@@ -106,184 +115,170 @@ namespace BS.Output.DoneDone
                         OutputValues["FileName", "Screenshot"].Value, 
                         OutputValues["FileFormat", ""].Value,
                         Convert.ToBoolean(OutputValues["OpenItemInBrowser", Convert.ToString(true)].Value),
-                        OutputValues["LastProjectID", string.Empty].Value, 
-                        OutputValues["LastIssueID", "1"].Value);
+                        Convert.ToInt32(OutputValues["LastProjectID", "0"].Value),
+                        Convert.ToInt32(OutputValues["LastPriorityLevelID", "0"].Value),
+                        Convert.ToInt32(OutputValues["LastFixerID", "0"].Value),
+                        Convert.ToInt32(OutputValues["LastTesterID", "0"].Value),
+                        Convert.ToInt32(OutputValues["LastIssueID", "1"].Value));
 
     }
 
     protected override async Task<V3.SendResult> Send(IWin32Window Owner, Output Output, V3.ImageData ImageData)
     {
 
-      //try
-      //{
+      try
+      {
 
-      //  string userName = Output.UserName;
-      //  string password = Output.Password;
-      //  bool showLogin = string.IsNullOrEmpty(userName) || string.IsNullOrEmpty(password);
-      //  bool rememberCredentials = false;
+        string userName = Output.UserName;
+        string password = Output.Password;
+        bool showLogin = string.IsNullOrEmpty(userName) || string.IsNullOrEmpty(password);
+        bool rememberCredentials = false;
 
-      //  string fileName = V3.FileHelper.GetFileName(Output.FileName, Output.FileFormat, ImageData);
+        string fileName = V3.FileHelper.GetFileName(Output.FileName, Output.FileFormat, ImageData);
 
-      //  while (true)
-      //  {
+        while (true)
+        {
 
-      //    if (showLogin)
-      //    {
+          if (showLogin)
+          {
 
-      //      // Show credentials window
-      //      Credentials credentials = new Credentials(Output.Url, userName, password, rememberCredentials);
+            // Show credentials window
+            Credentials credentials = new Credentials(Output.Url, userName, password, rememberCredentials);
 
-      //      var ownerHelper = new System.Windows.Interop.WindowInteropHelper(credentials);
-      //      ownerHelper.Owner = Owner.Handle;
+            var credentialsOwnerHelper = new System.Windows.Interop.WindowInteropHelper(credentials);
+            credentialsOwnerHelper.Owner = Owner.Handle;
 
-      //      if (credentials.ShowDialog() != true)
-      //      {
-      //        return new V3.SendResult(V3.Result.Canceled);
-      //      }
+            if (credentials.ShowDialog() != true)
+            {
+              return new V3.SendResult(V3.Result.Canceled);
+            }
 
-      //      userName = credentials.UserName;
-      //      password = credentials.Password;
-      //      rememberCredentials = credentials.Remember;
+            userName = credentials.UserName;
+            password = credentials.Password;
+            rememberCredentials = credentials.Remember;
 
-      //    }
+          }
 
-      //    try
-      //    {
+          GetProjectsResult projectsResult = await DoneDoneProxy.GetProjects(Output.Url, userName, password);
+          switch (projectsResult.Status)
+          {
+            case ResultStatus.Success:
+              break;
+            case ResultStatus.LoginFailed:
+              showLogin = true;
+              continue;
+            case ResultStatus.Failed:
+              return new V3.SendResult(V3.Result.Failed, projectsResult.FailedMessage);
+          }
 
-      //      GetProjectsResult projectsResult = await DoneDoneProxy.GetProjects(Output.Url, userName, password);
-      //      switch (projectsResult.Status)
-      //      {
-      //        case ResultStatus.Success:
-      //          break;
-      //        case ResultStatus.LoginFailed:
-      //          showLogin = true;
-      //          continue;
-      //        case ResultStatus.Failed:
-      //          return new V3.SendResult(V3.Result.Failed, projectsResult.FailedMessage);
-      //      }
+          GetPriorityLevelsResult priorityLevelsResult = await DoneDoneProxy.GetPriorityLevels(Output.Url, userName, password);
+          switch (priorityLevelsResult.Status)
+          {
+            case ResultStatus.Success:
+              break;
+            case ResultStatus.LoginFailed:
+              showLogin = true;
+              continue;
+            case ResultStatus.Failed:
+              return new V3.SendResult(V3.Result.Failed, priorityLevelsResult.FailedMessage);
+          }
 
-      //      GetProjectIssueTypesResult issueTypesResult = await JiraRestProxy.GetProjectIssueTypes(Output.Url, userName, password);
-      //      switch (issueTypesResult.Status)
-      //      {
-      //        case ResultStatus.Success:
-      //          break;
-      //        case ResultStatus.LoginFailed:
-      //          showLogin = true;
-      //          continue;
-      //        case ResultStatus.Failed:
-      //          return new V3.SendResult(V3.Result.Failed, projectsResult.FailedMessage);
-      //      }
+          // Show send window
+          Send send = new Send(Output.Url, Output.LastProjectID, Output.LastPriorityLevelID, Output.LastFixerID, Output.LastTesterID, Output.LastIssueID, projectsResult.Projects, priorityLevelsResult.PriorityLevels, userName, password, fileName);
 
-      //      // Show send window
-      //      Send send = new Send(Output.Url, Output.LastProjectKey, Output.LastIssueTypeID, Output.LastIssueID, projectsResult.Projects, issueTypesResult.IssueTypes, fileName);
+          var sendOwnerHelper = new System.Windows.Interop.WindowInteropHelper(send);
+          sendOwnerHelper.Owner = Owner.Handle;
 
-      //      var ownerHelper = new System.Windows.Interop.WindowInteropHelper(send);
-      //      ownerHelper.Owner = Owner.Handle;
+          if (!send.ShowDialog() == true)
+          {
+            return new V3.SendResult(V3.Result.Canceled);
+          }
 
-      //      if (!send.ShowDialog() == true)
-      //      {
-      //        return new V3.SendResult(V3.Result.Canceled);
-      //      }
+          string fullFileName = String.Format("{0}.{1}", send.FileName, V3.FileHelper.GetFileExtention(Output.FileFormat));
+          string fileMimeType = V3.FileHelper.GetMimeType(Output.FileFormat);
+          byte[] fileBytes = V3.FileHelper.GetFileBytes(Output.FileFormat, ImageData);
 
-      //      int issueTypeID;
-      //      string issueKey;
+          int issueID;
+          string issueUrl;
+          int priorityLevelID;
+          int fixerID;
+          int testerID;
+          
+          if (send.CreateNewIssue)
+          {
 
-      //      if (send.CreateNewIssue)
-      //      {
+            // Create issue
+            CreateIssueResult createIssueResult = await DoneDoneProxy.CreateIssue(Output.Url, userName, password, send.ProjectID, send.PriorityLevelID, send.FixerID, send.TesterID, send.IssueTitle, send.Description, fullFileName, fileMimeType, fileBytes);
+            switch (createIssueResult.Status)
+            {
+              case ResultStatus.Success:
+                break;
+              case ResultStatus.LoginFailed:
+                showLogin = true;
+                continue;
+              case ResultStatus.Failed:
+                return new V3.SendResult(V3.Result.Failed, createIssueResult.FailedMessage);
+            }
 
-      //        issueTypeID = send.IssueTypeID;
+            issueID = createIssueResult.IssueID;
+            issueUrl = createIssueResult.IssueUrl;
+            priorityLevelID = send.PriorityLevelID;
+            fixerID = send.FixerID;
+            testerID = send.TesterID;
 
-      //        // Create issue
-      //        CreateIssueResult createIssueResult = await JiraRestProxy.CreateIssue(Output.Url, userName, password, send.ProjectKey, issueTypeID, send.Summary, send.Description);
-      //        switch (createIssueResult.Status)
-      //        {
-      //          case ResultStatus.Success:
-      //            break;
-      //          case ResultStatus.LoginFailed:
-      //            showLogin = true;
-      //            continue;
-      //          case ResultStatus.Failed:
-      //            return new V3.SendResult(V3.Result.Failed, createIssueResult.FailedMessage);
-      //        }
+          }
+          else
+          {
+           
+            // Add attachment to issue
+            CreateIssueCommentResult createIssueCommentResult = await DoneDoneProxy.CreateIssueComment(Output.Url, userName, password, send.ProjectID, send.IssueID, send.Comment, fullFileName, fileMimeType, fileBytes);
+            switch (createIssueCommentResult.Status)
+            {
+              case ResultStatus.Success:
+                break;
+              case ResultStatus.LoginFailed:
+                showLogin = true;
+                continue;
+              case ResultStatus.Failed:
+                return new V3.SendResult(V3.Result.Failed, createIssueCommentResult.FailedMessage);
+            }
 
-      //        issueKey = createIssueResult.IssueKey;
+            issueID = send.IssueID;
+            issueUrl = createIssueCommentResult.CommentUrl;
+            priorityLevelID = Output.LastPriorityLevelID;
+            fixerID = Output.LastFixerID;
+            testerID = Output.LastTesterID;
 
-      //      }
-      //      else
-      //      {
-      //        issueTypeID = Output.LastIssueTypeID;
-      //        issueKey = String.Format("{0}-{1}", send.ProjectKey, send.IssueID);
-
-      //        // Add comment to issue
-      //        if (!String.IsNullOrEmpty(send.Comment))
-      //        {
-      //          Result commentResult = await JiraRestProxy.AddCommentToIssue(Output.Url, userName, password, issueKey, send.Comment);
-      //          switch (commentResult.Status)
-      //          {
-      //            case ResultStatus.Success:
-      //              break;
-      //            case ResultStatus.LoginFailed:
-      //              showLogin = true;
-      //              continue;
-      //            case ResultStatus.Failed:
-      //              return new V3.SendResult(V3.Result.Failed, commentResult.FailedMessage);
-      //          }
-      //        }
-
-      //      }
-
-      //      string fullFileName = String.Format("{0}.{1}", send.FileName, V3.FileHelper.GetFileExtention(Output.FileFormat));
-      //      string fileMimeType = V3.FileHelper.GetMimeType(Output.FileFormat);
-      //      byte[] fileBytes = V3.FileHelper.GetFileBytes(Output.FileFormat, ImageData);
-
-      //      // Add attachment to issue
-      //      Result attachmentResult = await JiraRestProxy.AddAttachmentToIssue(Output.Url, userName, password, issueKey, fullFileName, fileBytes, fileMimeType);
-      //      switch (attachmentResult.Status)
-      //      {
-      //        case ResultStatus.Success:
-      //          break;
-      //        case ResultStatus.LoginFailed:
-      //          showLogin = true;
-      //          continue;
-      //        case ResultStatus.Failed:
-      //          return new V3.SendResult(V3.Result.Failed, attachmentResult.FailedMessage);
-      //      }
+          }
 
 
-      //      // Open issue in browser
-      //      if (Output.OpenItemInBrowser)
-      //      {
-      //        V3.WebHelper.OpenUrl(String.Format("{0}/browse/{1}", Output.Url, issueKey));
-      //      }
+          // Open issue in browser
+          if (Output.OpenItemInBrowser)
+          {
+            V3.WebHelper.OpenUrl(issueUrl);
+          }
+                             
+          return new V3.SendResult(V3.Result.Success,
+                                    new Output(Output.Name,
+                                               Output.Url,
+                                               (rememberCredentials) ? userName : Output.UserName,
+                                               (rememberCredentials) ? password : Output.Password,
+                                               Output.FileName,
+                                               Output.FileFormat,
+                                               Output.OpenItemInBrowser,
+                                               send.ProjectID,
+                                               priorityLevelID,
+                                               fixerID,
+                                               testerID,
+                                               issueID));
+          
+        }
 
-
-      //      int issueID = Convert.ToInt32(issueKey.Split(new Char[] { '-' })[1]);
-      //      return new V3.SendResult(V3.Result.Success,
-      //                               new Output(Output.Name,
-      //                                          Output.Url,
-      //                                          (rememberCredentials) ? userName : Output.UserName,
-      //                                          (rememberCredentials) ? password : Output.Password,
-      //                                          Output.FileName,
-      //                                          Output.FileFormat,
-      //                                          Output.OpenItemInBrowser,
-      //                                          send.ProjectKey,
-      //                                          issueTypeID,
-      //                                          issueID));
-
-      //    }
-      //    catch (FaultException ex) when (ex.Reason.ToString() == "Access denied")
-      //    {
-      //      // Login failed
-      //      showLogin = true;
-      //    }
-
-      //  }
-
-      //}
-      //catch (Exception ex)
-      //{
-      //  return new V3.SendResult(V3.Result.Failed, ex.Message);
-      //}
+      }
+      catch (Exception ex)
+      {
+        return new V3.SendResult(V3.Result.Failed, ex.Message);
+      }
 
     }
 

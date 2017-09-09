@@ -1,31 +1,50 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Text.RegularExpressions;
 
 namespace BS.Output.DoneDone
 {
   partial class Send : Window
   {
- 
-    public Send(string url, string lastProjectID, string lastIssueID, ProjectData[] projects, string userName, string password, string fileName)
+
+    string url;
+    string userName;
+    string password;
+
+    public Send(string url, int lastProjectID, int lastPriorityLevelID, int lastFixerID, int lastTesterID, int lastIssueID, List<Project> projects, List<PriorityLevel> priorityLevels, string userName, string password, string fileName)
     {
       InitializeComponent();
-      
-      List<ProjectItem> projectItems = new List<ProjectItem>();
-      InitProjects(projectItems, projects, String.Empty);
-      ProjectComboBox.ItemsSource = projectItems;
+
+      this.url = url;
+      this.userName = userName;
+      this.password = password;
+
+      ProjectComboBox.ItemsSource = projects;
+      PriorityLevelComboBox.ItemsSource = priorityLevels;
 
       Url.Text = url;
       NewIssue.IsChecked = true;
       ProjectComboBox.SelectedValue = lastProjectID;
-      IssueIDTextBox.Text = lastIssueID;
+      PriorityLevelComboBox.SelectedValue = lastPriorityLevelID;
+
+      if (ProjectComboBox.SelectedItem != null)
+      {
+        FixerComboBox.SelectedValue = lastFixerID;
+        TesterComboBox.SelectedValue = lastTesterID;
+      }
+
+      IssueIDTextBox.Text = lastIssueID.ToString();
       FileNameTextBox.Text = fileName;
 
       ProjectComboBox.SelectionChanged += ValidateData;
-      SummaryTextBox.TextChanged += ValidateData;
+      PriorityLevelComboBox.SelectionChanged += ValidateData;
+      FixerComboBox.SelectionChanged += ValidateData;
+      TesterComboBox.SelectionChanged += ValidateData;
+      TitleTextBox.TextChanged += ValidateData;
       DescriptionTextBox.TextChanged += ValidateData;
       IssueIDTextBox.TextChanged += ValidateData;
       FileNameTextBox.TextChanged += ValidateData;
@@ -38,14 +57,29 @@ namespace BS.Output.DoneDone
       get { return NewIssue.IsChecked.Value; }
     }
  
-    public string ProjectID
+    public int ProjectID
     {
-      get { return (string)ProjectComboBox.SelectedValue; }
+      get { return Convert.ToInt32(ProjectComboBox.SelectedValue); }
     }
-      
-    public string Summary
+
+    public int PriorityLevelID
     {
-      get { return SummaryTextBox.Text; }
+      get { return Convert.ToInt32(PriorityLevelComboBox.SelectedValue); }
+    }
+
+    public int TesterID
+    {
+      get { return Convert.ToInt32(TesterComboBox.SelectedValue); }
+    }
+
+    public int FixerID
+    {
+      get { return Convert.ToInt32(FixerComboBox.SelectedValue); }
+    }
+
+    public string IssueTitle
+    {
+      get { return TitleTextBox.Text; }
     }
 
     public string Description
@@ -53,62 +87,47 @@ namespace BS.Output.DoneDone
       get { return DescriptionTextBox.Text; }
     }
 
-    public string IssueID
+    public int IssueID
     {
-      get { return IssueIDTextBox.Text; }
+      get { return Convert.ToInt32(IssueIDTextBox.Text); }
+    }
+
+    public string Comment
+    {
+      get { return CommentTextBox.Text; }
     }
 
     public string FileName
     {
       get { return FileNameTextBox.Text; }
     }
-
-    private void InitProjects(List<ProjectItem> projectItems, ProjectData[] projects, string parentProjectName)
-    {
-      string fullName = null;
-
-      foreach (ProjectData project in projects)
-      {
-        if (parentProjectName == string.Empty)
-        {
-          fullName = project.name;
-        }
-        else
-        {
-          fullName = parentProjectName + " - " + project.name;
-        }
-
-        projectItems.Add(new ProjectItem(project.id, fullName));
-
-        if ((project.subprojects != null))
-        {
-          InitProjects(projectItems, project.subprojects, fullName);
-        }
-
-      }
-
-    }
-
+       
     private void NewIssue_CheckedChanged(object sender, EventArgs e)
     {
 
       if (NewIssue.IsChecked.Value)
       {
-        ProjectControls.Visibility = Visibility.Visible;
-        SummaryControls.Visibility = Visibility.Visible;
+        PriorityLevelControls.Visibility = Visibility.Visible;
+        FixerControls.Visibility = Visibility.Visible;
+        TesterControls.Visibility = Visibility.Visible;
+        TitleControls.Visibility = Visibility.Visible;
         DescriptionControls.Visibility = Visibility.Visible;
         IssueIDControls.Visibility = Visibility.Collapsed;
+        CommentControls.Visibility = Visibility.Collapsed;
 
-        SummaryTextBox.SelectAll();
-        SummaryTextBox.Focus();
+        TitleTextBox.SelectAll();
+        TitleTextBox.Focus();
       }
       else
       {
-        ProjectControls.Visibility = Visibility.Collapsed;
-        SummaryControls.Visibility = Visibility.Collapsed;
+        PriorityLevelControls.Visibility = Visibility.Collapsed;
+        FixerControls.Visibility = Visibility.Collapsed;
+        TesterControls.Visibility = Visibility.Collapsed;
+        TitleControls.Visibility = Visibility.Collapsed;
         DescriptionControls.Visibility = Visibility.Collapsed;
         IssueIDControls.Visibility = Visibility.Visible;
-        
+        CommentControls.Visibility = Visibility.Visible;
+
         IssueIDTextBox.SelectAll();
         IssueIDTextBox.Focus();
       }
@@ -124,7 +143,8 @@ namespace BS.Output.DoneDone
     
     private void ValidateData(object sender, EventArgs e)
     {
-      OK.IsEnabled = ((CreateNewIssue && Validation.IsValid(ProjectComboBox) && Validation.IsValid(SummaryTextBox) && Validation.IsValid(DescriptionTextBox)) ||
+      OK.IsEnabled = Validation.IsValid(ProjectComboBox) && 
+                     ((CreateNewIssue && Validation.IsValid(TitleTextBox) && Validation.IsValid(DescriptionTextBox) && Validation.IsValid(PriorityLevelComboBox) && Validation.IsValid(FixerComboBox) && Validation.IsValid(TesterComboBox)) ||
                       (!CreateNewIssue && Validation.IsValid(IssueIDTextBox))) &&
                      Validation.IsValid(FileNameTextBox);
     }
@@ -134,30 +154,23 @@ namespace BS.Output.DoneDone
       this.DialogResult = true;
     }
 
-  }
-
-  internal class ProjectItem
-  {
-    
-    private string projectID;
-    private string fullName;
-
-    public ProjectItem(string projectID, string fullName)
+    private async void ProjectComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-      this.projectID = projectID;
-      this.fullName = fullName;
-    }
 
-    public string ProjectID
-    {
-      get { return projectID; }
-    }
+      GetPeopleInProjectResult peopleInProjectResult = await DoneDoneProxy.GetPeopleInProject(url, userName, password, ProjectID);
+      
+      if (peopleInProjectResult.Status == ResultStatus.Success)
+      {
+        FixerComboBox.ItemsSource = peopleInProjectResult.Peoples;
+        TesterComboBox.ItemsSource = peopleInProjectResult.Peoples;
+      }
+      else
+      {
+        FixerComboBox.ItemsSource = null;
+        TesterComboBox.ItemsSource = null;
+      }
 
-    public override string ToString()
-    {
-      return fullName;
     }
-
   }
 
 }

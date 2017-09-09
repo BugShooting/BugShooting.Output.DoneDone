@@ -17,7 +17,7 @@ namespace BS.Output.DoneDone
     const int ConflictRequestRepeatCount = 10;
     const int ConflictRequestRepeatDelay = 1000;
 
-    static internal async Task<GetProjectsResult> GetProjects(string url, string userName, string password, string apiToken)
+    static internal async Task<GetProjectsResult> GetProjects(string url, string userName, string password)
     {
 
       int repeatCount = 0;
@@ -28,8 +28,8 @@ namespace BS.Output.DoneDone
         try
         {
 
-          string requestUrl = GetApiUrl(url, "projects");
-          string resultData = await GetData(requestUrl, userName, password, apiToken);
+          string requestUrl = GetApiUrl(url, "projects.json");
+          string resultData = await GetData(requestUrl, userName, password);
           List<Project> projects = FromJson<List<Project>>(resultData);
 
           return new GetProjectsResult(ResultStatus.Success, projects, null);
@@ -69,7 +69,7 @@ namespace BS.Output.DoneDone
 
     }
 
-    static internal async Task<GetPriorityLevelsResult> GetPriorityLevels(string url, string userName, string password, string apiToken)
+    static internal async Task<GetPriorityLevelsResult> GetPriorityLevels(string url, string userName, string password)
     {
 
       int intRepeatCount = 0;
@@ -79,8 +79,8 @@ namespace BS.Output.DoneDone
 
         try
         {
-          string requestUrl = GetApiUrl(url, "prioritylevels");
-          string resultData = await GetData(requestUrl, userName, password, apiToken);
+          string requestUrl = GetApiUrl(url, "priority_levels.json");
+          string resultData = await GetData(requestUrl, userName, password);
           List<PriorityLevel> priorityLevels = FromJson<List<PriorityLevel>>(resultData);
 
           return new GetPriorityLevelsResult(ResultStatus.Success, priorityLevels, null);
@@ -120,7 +120,7 @@ namespace BS.Output.DoneDone
 
     }
 
-    static internal async Task<GetPeopleInProjectResult> GetPeopleInProject(string url, string userName, string password, string apiToken, int projectID)
+    static internal async Task<GetPeopleInProjectResult> GetPeopleInProject(string url, string userName, string password, int projectID)
     {
 
       int repeatCount = 0;
@@ -130,8 +130,8 @@ namespace BS.Output.DoneDone
 
         try
         {
-          string requestUrl = GetApiUrl(url, String.Format("peopleinproject/{0}", projectID));
-          string resultData = await GetData(requestUrl, userName, password, apiToken);
+          string requestUrl = GetApiUrl(url, String.Format("/projects/{0}/available_for_reassignment.json", projectID));
+          string resultData = await GetData(requestUrl, userName, password);
           List<People> peoples = FromJson<List<People>>(resultData);
 
           return new GetPeopleInProjectResult(ResultStatus.Success, peoples, null);
@@ -174,10 +174,9 @@ namespace BS.Output.DoneDone
     static internal async Task<CreateIssueResult> CreateIssue(string url, 
                                                               string userName, 
                                                               string password, 
-                                                              string apiToken, 
                                                               int projectID, 
                                                               int priorityLevelID, 
-                                                              int resolverID, 
+                                                              int fixerID, 
                                                               int testerID, 
                                                               string title,
                                                               string description,
@@ -197,11 +196,11 @@ namespace BS.Output.DoneDone
           parameters.Add("title", title);
           parameters.Add("description", description);
           parameters.Add("priority_level_id", priorityLevelID.ToString());
-          parameters.Add("resolver_id", resolverID.ToString());
+          parameters.Add("fixer_id", fixerID.ToString());
           parameters.Add("tester_id", testerID.ToString());
 
-          string requestUrl = GetApiUrl(url, String.Format("issue/{0}", projectID));
-          string resultData = await SendFile(requestUrl, userName, password, apiToken, parameters, fullFileName, fileMimeType, fileBytes);
+          string requestUrl = GetApiUrl(url, String.Format("projects/{0}/issues.json", projectID));
+          string resultData = await SendFile(requestUrl, userName, password, parameters, fullFileName, fileMimeType, fileBytes);
           CreateIssueData createIssueData = FromJson<CreateIssueData>(resultData);
 
           return new CreateIssueResult(ResultStatus.Success, createIssueData.IssueURL, createIssueData.IssueID, null);
@@ -244,7 +243,6 @@ namespace BS.Output.DoneDone
     static internal async Task<CreateIssueCommentResult> CreateIssueComment(string url, 
                                                                             string userName, 
                                                                             string password, 
-                                                                            string apiToken, 
                                                                             int projectID, 
                                                                             int issueID, 
                                                                             string comment,
@@ -263,8 +261,8 @@ namespace BS.Output.DoneDone
           SortedList<string, string> parameters = new SortedList<string, string>();
           parameters.Add("comment", comment);
 
-          string requestUrl = GetApiUrl(url, String.Format("comment/{0}/{1}", projectID, issueID));
-          string resultData = await SendFile(requestUrl, userName, password, apiToken, parameters, fullFileName, fileMimeType, fileBytes);
+          string requestUrl = GetApiUrl(url, String.Format("projects/{0}/issues/{1}/comments.json", projectID, issueID));
+          string resultData = await SendFile(requestUrl, userName, password, parameters, fullFileName, fileMimeType, fileBytes);
           CreateIssueCommentData createIssueCommentData = FromJson<CreateIssueCommentData>(resultData);
 
           return new CreateIssueCommentResult(ResultStatus.Success, createIssueCommentData.CommentURL, null);
@@ -304,21 +302,12 @@ namespace BS.Output.DoneDone
 
     }
     
-    private static async Task<string> GetData(string url, string username, string password, string apiToken)
+    private static async Task<string> GetData(string url, string username, string password)
     {
 
       WebRequest request = WebRequest.Create(url);
       request.Method = "GET";
       request.ContentType = "application/x-www-form-urlencoded";
-
-      // DoneDone Signature
-      StringBuilder signatureData = new StringBuilder();
-      signatureData.Append(url);
-      using (System.Security.Cryptography.HMACSHA1 hmac = new System.Security.Cryptography.HMACSHA1(Encoding.UTF8.GetBytes(apiToken), true))
-      {
-        string signature = Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(signatureData.ToString())));
-        request.Headers.Add("X-DoneDone-Signature", signature);
-      }
       
       // Basic Authorization
       string basicAuth = Convert.ToBase64String(Encoding.ASCII.GetBytes(string.Format("{0}:{1}", username, password)));
@@ -335,7 +324,7 @@ namespace BS.Output.DoneDone
 
     }
 
-    private static async Task<string> SendFile(string url, string username, string password, string apiToken, SortedList<string, string> parameters, string fullFileName, string fileMimeType, byte[] fileBytes)
+    private static async Task<string> SendFile(string url, string username, string password, SortedList<string, string> parameters, string fullFileName, string fileMimeType, byte[] fileBytes)
     {
 
       string boundary = String.Format("----------{0}", DateTime.Now.Ticks.ToString("x"));
@@ -362,23 +351,7 @@ namespace BS.Output.DoneDone
 
       byte[] postBytes = Encoding.UTF8.GetBytes(postData.ToString());
       byte[] boundaryBytes = Encoding.ASCII.GetBytes(String.Format("\r\n--{0}\r\n", boundary));
-      
-      // DoneDone Signature
-      StringBuilder signatureData = new StringBuilder();
-      signatureData.Append(url);
-
-      foreach (string key in parameters.Keys)
-      {
-        signatureData.Append(key);
-        signatureData.Append(parameters[key]);
-      }
-      
-      using (System.Security.Cryptography.HMACSHA1 hmac = new System.Security.Cryptography.HMACSHA1(Encoding.UTF8.GetBytes(apiToken), true))
-      {
-        string signature = Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(signatureData.ToString())));
-        request.Headers.Add("X-DoneDone-Signature", signature);
-      }
-      
+            
       // Basic Authorization
       string basicAuth = Convert.ToBase64String(Encoding.ASCII.GetBytes(string.Format("{0}:{1}", username, password)));
       request.Headers.Add("Authorization", String.Format("Basic {0}", basicAuth));
@@ -415,7 +388,7 @@ namespace BS.Output.DoneDone
         apiUrl += "/";
       }
 
-      apiUrl += "issuetracker/api/" + method;
+      apiUrl += "issuetracker/api/v2/" + method;
 
       return apiUrl;
 
@@ -429,28 +402,6 @@ namespace BS.Output.DoneDone
       using (MemoryStream stream = new MemoryStream(Encoding.Unicode.GetBytes(jsonText)))
       {
         return (T)serializer.ReadObject(stream);
-      }
-
-    }
-
-    private static T FromJson<T>(WebResponse response)
-    {
-
-      string responseContent = null;
-
-      using (StreamReader reader = new StreamReader(response.GetResponseStream()))
-      {
-        responseContent = reader.ReadToEnd();
-      }
-
-      DataContractJsonSerializerSettings serializerSettings = new DataContractJsonSerializerSettings();
-      serializerSettings.UseSimpleDictionaryFormat = true;
-
-      DataContractJsonSerializer serializer = new DataContractJsonSerializer(typeof(T), serializerSettings);
-
-      using (MemoryStream memoryStream = new MemoryStream(Encoding.Unicode.GetBytes(responseContent)))
-      {
-        return (T)serializer.ReadObject(memoryStream);
       }
 
     }
@@ -647,20 +598,20 @@ namespace BS.Output.DoneDone
   {
 
     int id;
-    string name;
+    string title;
 
-    [DataMember(Name = "ID")]
+    [DataMember(Name = "id")]
     public int ID
     {
       get { return id; }
       set { id = value; }
     }
 
-    [DataMember(Name = "Name")]
-    public string Name
+    [DataMember(Name = "title")]
+    public string Title
     {
-      get { return name; }
-      set { name = value; }
+      get { return title; }
+      set { title = value; }
     }
 
   }
@@ -672,14 +623,14 @@ namespace BS.Output.DoneDone
     int id;
     string name;
 
-    [DataMember(Name = "ID")]
+    [DataMember(Name = "id")]
     public int ID
     {
       get { return id; }
       set { id = value; }
     }
 
-    [DataMember(Name = "Value")]
+    [DataMember(Name = "name")]
     public string Name
     {
       get { return name; }

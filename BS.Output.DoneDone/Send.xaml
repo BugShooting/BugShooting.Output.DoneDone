@@ -23,15 +23,15 @@
         <ColumnDefinition Width="*"/>
       </Grid.ColumnDefinitions>
       <Label Grid.Column="0">Project</Label>
-      <ComboBox x:Name="ProjectComboBox" Grid.Column="1" SelectedValuePath="ProjectID" local:Validation.Required="True" />
+      <ComboBox x:Name="ProjectComboBox" Grid.Column="1" SelectedValuePath="ID" DisplayMemberPath="Title" local:Validation.Required="True" SelectionChanged="ProjectComboBox_SelectionChanged" />
     </Grid>
-    <Grid x:Name="SummaryControls" Margin="4">
+    <Grid x:Name="TitleControls" Margin="4">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="Auto" SharedSizeGroup="Label"/>
         <ColumnDefinition Width="*"/>
       </Grid.ColumnDefinitions>
-      <Label Grid.Column="0">Summary</Label>
-      <TextBox x:Name="SummaryTextBox" Grid.Column="1" VerticalContentAlignment="Center" local:Validation.Required="True" />
+      <Label Grid.Column="0">Title</Label>
+      <TextBox x:Name="TitleTextBox" Grid.Column="1" VerticalContentAlignment="Center" local:Validation.Required="True" />
     </Grid>
     <Grid x:Name="DescriptionControls" Margin="4">
       <Grid.ColumnDefinitions>
@@ -41,6 +41,30 @@
       <Label Grid.Column="0">Description</Label>
       <TextBox x:Name="DescriptionTextBox" Grid.Column="1" VerticalContentAlignment="Center" MaxLines="5" TextWrapping="Wrap" ScrollViewer.VerticalScrollBarVisibility="Auto" local:Validation.Required="True" />
     </Grid>
+    <Grid x:Name="PriorityLevelControls" Margin="4">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto" SharedSizeGroup="Label"/>
+        <ColumnDefinition Width="*"/>
+      </Grid.ColumnDefinitions>
+      <Label Grid.Column="0">Priority level</Label>
+      <ComboBox x:Name="PriorityLevelComboBox" Grid.Column="1" SelectedValuePath="ID" DisplayMemberPath="Name" local:Validation.Required="True" />
+    </Grid>
+    <Grid x:Name="FixerControls" Margin="4">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto" SharedSizeGroup="Label"/>
+        <ColumnDefinition Width="*"/>
+      </Grid.ColumnDefinitions>
+      <Label Grid.Column="0">Fixer</Label>
+      <ComboBox x:Name="FixerComboBox" Grid.Column="1" SelectedValuePath="ID" DisplayMemberPath="Name" local:Validation.Required="True" />
+    </Grid>
+    <Grid x:Name="TesterControls" Margin="4">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto" SharedSizeGroup="Label"/>
+        <ColumnDefinition Width="*"/>
+      </Grid.ColumnDefinitions>
+      <Label Grid.Column="0">Tester</Label>
+      <ComboBox x:Name="TesterComboBox" Grid.Column="1" SelectedValuePath="ID" DisplayMemberPath="Name" local:Validation.Required="True" />
+    </Grid>
     <Grid x:Name="IssueIDControls" Margin="4">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="Auto" SharedSizeGroup="Label"/>
@@ -48,6 +72,14 @@
       </Grid.ColumnDefinitions>
       <Label Grid.Column="0">Issue ID</Label>
       <TextBox x:Name="IssueIDTextBox" Grid.Column="1" VerticalContentAlignment="Center" PreviewTextInput="IssueID_PreviewTextInput" local:Validation.Required="True" />
+    </Grid>
+    <Grid x:Name="CommentControls" Margin="4">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto" SharedSizeGroup="Label"/>
+        <ColumnDefinition Width="*"/>
+      </Grid.ColumnDefinitions>
+      <Label Grid.Column="0">Comment</Label>
+      <TextBox x:Name="CommentTextBox" Grid.Column="1" VerticalContentAlignment="Center" />
     </Grid>
     <Grid Margin="4">
       <Grid.ColumnDefinitions>
