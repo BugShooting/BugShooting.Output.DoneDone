@@ -157,7 +157,9 @@ namespace BS.Output.DoneDone
     private async void ProjectComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
 
-      GetPeopleInProjectResult peopleInProjectResult = await DoneDoneProxy.GetPeopleInProject(url, userName, password, ProjectID);
+      Project project = (Project)ProjectComboBox.SelectedItem;
+
+      GetPeopleInProjectResult peopleInProjectResult = await DoneDoneProxy.GetPeopleInProject(url, userName, password, project.ID);
       
       if (peopleInProjectResult.Status == ResultStatus.Success)
       {

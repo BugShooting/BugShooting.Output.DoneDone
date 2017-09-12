@@ -130,7 +130,7 @@ namespace BS.Output.DoneDone
 
         try
         {
-          string requestUrl = GetApiUrl(url, String.Format("/projects/{0}/available_for_reassignment.json", projectID));
+          string requestUrl = GetApiUrl(url, String.Format("/projects/{0}/people.json", projectID));
           string resultData = await GetData(requestUrl, userName, password);
           List<People> peoples = FromJson<List<People>>(resultData);
 
@@ -203,7 +203,7 @@ namespace BS.Output.DoneDone
           string resultData = await SendFile(requestUrl, userName, password, parameters, fullFileName, fileMimeType, fileBytes);
           CreateIssueData createIssueData = FromJson<CreateIssueData>(resultData);
 
-          return new CreateIssueResult(ResultStatus.Success, createIssueData.IssueURL, createIssueData.IssueID, null);
+          return new CreateIssueResult(ResultStatus.Success, createIssueData.IssueID, null);
 
         }
         catch (WebException ex) when (ex.Response is HttpWebResponse)
@@ -214,7 +214,7 @@ namespace BS.Output.DoneDone
           switch (response.StatusCode)
           {
             case HttpStatusCode.Unauthorized:
-              return new CreateIssueResult(ResultStatus.LoginFailed, null, 0, null);
+              return new CreateIssueResult(ResultStatus.LoginFailed, 0, null);
 
             case HttpStatusCode.Conflict:
               
@@ -227,11 +227,11 @@ namespace BS.Output.DoneDone
               }
               else
               {
-                return new CreateIssueResult(ResultStatus.Failed, null, 0, response.StatusDescription);
+                return new CreateIssueResult(ResultStatus.Failed, 0, response.StatusDescription);
               }
 
             default:
-              return new CreateIssueResult(ResultStatus.Failed, null, 0, response.StatusDescription);
+              return new CreateIssueResult(ResultStatus.Failed, 0, response.StatusDescription);
           }
 
         }
@@ -263,9 +263,8 @@ namespace BS.Output.DoneDone
 
           string requestUrl = GetApiUrl(url, String.Format("projects/{0}/issues/{1}/comments.json", projectID, issueID));
           string resultData = await SendFile(requestUrl, userName, password, parameters, fullFileName, fileMimeType, fileBytes);
-          CreateIssueCommentData createIssueCommentData = FromJson<CreateIssueCommentData>(resultData);
-
-          return new CreateIssueCommentResult(ResultStatus.Success, createIssueCommentData.CommentURL, null);
+         
+          return new CreateIssueCommentResult(ResultStatus.Success, null);
           
         }
         catch (WebException ex) when (ex.Response is HttpWebResponse)
@@ -276,7 +275,7 @@ namespace BS.Output.DoneDone
           switch (response.StatusCode)
           {
             case HttpStatusCode.Unauthorized:
-              return new CreateIssueCommentResult(ResultStatus.LoginFailed, null, null);
+              return new CreateIssueCommentResult(ResultStatus.LoginFailed, null);
 
             case HttpStatusCode.Conflict:
               
@@ -289,11 +288,11 @@ namespace BS.Output.DoneDone
               }
               else
               {
-                return new CreateIssueCommentResult(ResultStatus.Failed, null, response.StatusDescription);
+                return new CreateIssueCommentResult(ResultStatus.Failed, response.StatusDescription);
               }
 
             default:
-              return new CreateIssueCommentResult(ResultStatus.Failed, null, response.StatusDescription);
+              return new CreateIssueCommentResult(ResultStatus.Failed, response.StatusDescription);
           }
 
         }
@@ -521,17 +520,14 @@ namespace BS.Output.DoneDone
   {
 
     ResultStatus status;
-    string issueUrl;
     int issueID;
     string failedMessage;
 
     public CreateIssueResult(ResultStatus status,
-                             string issueUrl,
                              int issueID,
                              string failedMessage)
     {
       this.status = status;
-      this.issueUrl = issueUrl;
       this.issueID = issueID;
       this.failedMessage = failedMessage;
     }
@@ -539,11 +535,6 @@ namespace BS.Output.DoneDone
     public ResultStatus Status
     {
       get { return status; }
-    }
-
-    public string IssueUrl
-    {
-      get { return issueUrl; }
     }
 
     public int IssueID
@@ -563,26 +554,18 @@ namespace BS.Output.DoneDone
   {
 
     ResultStatus status;
-    string commentUrl;
     string failedMessage;
 
     public CreateIssueCommentResult(ResultStatus status,
-                                    string commentUrl,
                                     string failedMessage)
     {
       this.status = status;
-      this.commentUrl = commentUrl;
       this.failedMessage = failedMessage;
     }
 
     public ResultStatus Status
     {
       get { return status; }
-    }
-
-    public string CommentUrl
-    {
-      get { return commentUrl; }
     }
 
     public string FailedMessage
@@ -646,14 +629,14 @@ namespace BS.Output.DoneDone
     int id;
     string name;
 
-    [DataMember(Name = "ID")]
+    [DataMember(Name = "id")]
     public int ID
     {
       get { return id; }
       set { id = value; }
     }
 
-    [DataMember(Name = "Value")]
+    [DataMember(Name = "name")]
     public string Name
     {
       get { return name; }
@@ -667,37 +650,14 @@ namespace BS.Output.DoneDone
   {
 
     int issueID;
-    string issueURL;
 
-    [DataMember(Name = "IssueID")]
+    [DataMember(Name = "order_number")]
     public int IssueID
     {
       get { return issueID; }
       set { issueID = value; }
     }
 
-    [DataMember(Name = "IssueURL")]
-    public string IssueURL
-    {
-      get { return issueURL; }
-      set { issueURL = value; }
-    }
-
   }
-
-  [DataContract()]
-  internal class CreateIssueCommentData
-  {
-    
-    string commentURL;
-
-    [DataMember(Name = "CommentURL")]
-    public string CommentURL
-    {
-      get { return commentURL; }
-      set { commentURL = value; }
-    }
-
-  }
-
+  
 }

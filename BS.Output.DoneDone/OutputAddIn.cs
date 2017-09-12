@@ -199,7 +199,6 @@ namespace BS.Output.DoneDone
           byte[] fileBytes = V3.FileHelper.GetFileBytes(Output.FileFormat, ImageData);
 
           int issueID;
-          string issueUrl;
           int priorityLevelID;
           int fixerID;
           int testerID;
@@ -221,7 +220,6 @@ namespace BS.Output.DoneDone
             }
 
             issueID = createIssueResult.IssueID;
-            issueUrl = createIssueResult.IssueUrl;
             priorityLevelID = send.PriorityLevelID;
             fixerID = send.FixerID;
             testerID = send.TesterID;
@@ -244,7 +242,6 @@ namespace BS.Output.DoneDone
             }
 
             issueID = send.IssueID;
-            issueUrl = createIssueCommentResult.CommentUrl;
             priorityLevelID = Output.LastPriorityLevelID;
             fixerID = Output.LastFixerID;
             testerID = Output.LastTesterID;
@@ -255,7 +252,7 @@ namespace BS.Output.DoneDone
           // Open issue in browser
           if (Output.OpenItemInBrowser)
           {
-            V3.WebHelper.OpenUrl(issueUrl);
+            V3.WebHelper.OpenUrl(String.Format("{0}/issuetracker/projects/{1}/issues/{2}",Output.Url, send.ProjectID, issueID));
           }
                              
           return new V3.SendResult(V3.Result.Success,
