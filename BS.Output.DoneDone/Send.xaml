@@ -79,7 +79,7 @@
         <ColumnDefinition Width="*"/>
       </Grid.ColumnDefinitions>
       <Label Grid.Column="0">Comment</Label>
-      <TextBox x:Name="CommentTextBox" Grid.Column="1" VerticalContentAlignment="Center" />
+      <TextBox x:Name="CommentTextBox" Grid.Column="1" VerticalContentAlignment="Center" MaxLines="5" TextWrapping="Wrap" ScrollViewer.VerticalScrollBarVisibility="Auto" />
     </Grid>
     <Grid Margin="4">
       <Grid.ColumnDefinitions>
