@@ -1,7 +1,7 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
 
-namespace BS.Output.DoneDone
+namespace BugShooting.Output.DoneDone
 {
   partial class Credentials : Window
   {

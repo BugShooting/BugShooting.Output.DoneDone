@@ -1,21 +1,21 @@
 <?xml version="1.0"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
     <metadata>
-			<id>BS.Output.DoneDone</id>
+			<id>BugShooting.Output.DoneDone</id>
 			<version>1.0.0</version>
 			<title>DoneDone Output for Bug Shooting</title>
       <authors>Bug Shooting, Alexej Hirsch</authors>
       <owners>Bug Shooting, Alexej Hirsch</owners>
-      <licenseUrl>https://github.com/BugShooting/Output.DoneDone/raw/master/LICENSE.txt</licenseUrl>
+      <licenseUrl>https://github.com/BugShooting/BugShooting.Output.DoneDone/raw/master/LICENSE.txt</licenseUrl>
 			<projectUrl>https://github.com/BugShooting</projectUrl>
-			<iconUrl>https://github.com/BugShooting/Output.DoneDone/raw/master/BS.Output.DoneDone/Resources/logo_64.png</iconUrl>
+			<iconUrl>https://github.com/BugShooting/BugShooting.Output.DoneDone/raw/master/BugShooting.Output.DoneDone/Resources/logo_64.png</iconUrl>
 			<requireLicenseAcceptance>false</requireLicenseAcceptance>
 			<releaseNotes />
 			<description>Attach screenshots to DoneDone issues.</description>
 			<copyright />
-			<tags>bugshooting.com/output/v3</tags>
+			<tags>bugshooting.plugin.v3.output</tags>
     </metadata>
     <files>
-			<file src="BS.Output.DoneDone.dll" />
+			<file src="BugShooting.Output.DoneDone.dll" />
     </files>
 </package>

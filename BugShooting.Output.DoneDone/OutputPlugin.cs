@@ -2,10 +2,13 @@
 using System.Drawing;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using BS.Plugin.V3.Output;
+using BS.Plugin.V3.Common;
+using BS.Plugin.V3.Utilities;
 
-namespace BS.Output.DoneDone
+namespace BugShooting.Output.DoneDone
 {
-  public class OutputAddIn: V3.OutputAddIn<Output>
+  public class OutputPlugin: OutputPlugin<Output>
   {
 
     protected override string Name
@@ -83,47 +86,47 @@ namespace BS.Output.DoneDone
 
     }
 
-    protected override OutputValueCollection SerializeOutput(Output Output)
+    protected override OutputValues SerializeOutput(Output Output)
     {
 
-      OutputValueCollection outputValues = new OutputValueCollection();
+      OutputValues outputValues = new OutputValues();
 
-      outputValues.Add(new OutputValue("Name", Output.Name));
-      outputValues.Add(new OutputValue("Url", Output.Url));
-      outputValues.Add(new OutputValue("UserName", Output.UserName));
-      outputValues.Add(new OutputValue("Password",Output.Password, true));
-      outputValues.Add(new OutputValue("OpenItemInBrowser", Convert.ToString(Output.OpenItemInBrowser)));
-      outputValues.Add(new OutputValue("FileName", Output.FileName));
-      outputValues.Add(new OutputValue("FileFormat", Output.FileFormat));
-      outputValues.Add(new OutputValue("LastProjectID", Output.LastProjectID.ToString()));
-      outputValues.Add(new OutputValue("LastPriorityLevelID", Output.LastPriorityLevelID.ToString()));
-      outputValues.Add(new OutputValue("LastFixerID", Output.LastFixerID.ToString()));
-      outputValues.Add(new OutputValue("LastTesterID", Output.LastTesterID.ToString()));
-      outputValues.Add(new OutputValue("LastIssueID", Output.LastIssueID.ToString()));
+      outputValues.Add("Name", Output.Name);
+      outputValues.Add("Url", Output.Url);
+      outputValues.Add("UserName", Output.UserName);
+      outputValues.Add("Password",Output.Password, true);
+      outputValues.Add("OpenItemInBrowser", Convert.ToString(Output.OpenItemInBrowser));
+      outputValues.Add("FileName", Output.FileName);
+      outputValues.Add("FileFormat", Output.FileFormat);
+      outputValues.Add("LastProjectID", Output.LastProjectID.ToString());
+      outputValues.Add("LastPriorityLevelID", Output.LastPriorityLevelID.ToString());
+      outputValues.Add("LastFixerID", Output.LastFixerID.ToString());
+      outputValues.Add("LastTesterID", Output.LastTesterID.ToString());
+      outputValues.Add("LastIssueID", Output.LastIssueID.ToString());
 
       return outputValues;
       
     }
 
-    protected override Output DeserializeOutput(OutputValueCollection OutputValues)
+    protected override Output DeserializeOutput(OutputValues OutputValues)
     {
 
-      return new Output(OutputValues["Name", this.Name].Value,
-                        OutputValues["Url", ""].Value, 
-                        OutputValues["UserName", ""].Value,
-                        OutputValues["Password", ""].Value, 
-                        OutputValues["FileName", "Screenshot"].Value, 
-                        OutputValues["FileFormat", ""].Value,
-                        Convert.ToBoolean(OutputValues["OpenItemInBrowser", Convert.ToString(true)].Value),
-                        Convert.ToInt32(OutputValues["LastProjectID", "0"].Value),
-                        Convert.ToInt32(OutputValues["LastPriorityLevelID", "0"].Value),
-                        Convert.ToInt32(OutputValues["LastFixerID", "0"].Value),
-                        Convert.ToInt32(OutputValues["LastTesterID", "0"].Value),
-                        Convert.ToInt32(OutputValues["LastIssueID", "1"].Value));
+      return new Output(OutputValues["Name", this.Name],
+                        OutputValues["Url", ""], 
+                        OutputValues["UserName", ""],
+                        OutputValues["Password", ""], 
+                        OutputValues["FileName", "Screenshot"], 
+                        OutputValues["FileFormat", ""],
+                        Convert.ToBoolean(OutputValues["OpenItemInBrowser", Convert.ToString(true)]),
+                        Convert.ToInt32(OutputValues["LastProjectID", "0"]),
+                        Convert.ToInt32(OutputValues["LastPriorityLevelID", "0"]),
+                        Convert.ToInt32(OutputValues["LastFixerID", "0"]),
+                        Convert.ToInt32(OutputValues["LastTesterID", "0"]),
+                        Convert.ToInt32(OutputValues["LastIssueID", "1"]));
 
     }
 
-    protected override async Task<V3.SendResult> Send(IWin32Window Owner, Output Output, V3.ImageData ImageData)
+    protected override async Task<SendResult> Send(IWin32Window Owner, Output Output, ImageData ImageData)
     {
 
       try
@@ -134,7 +137,7 @@ namespace BS.Output.DoneDone
         bool showLogin = string.IsNullOrEmpty(userName) || string.IsNullOrEmpty(password);
         bool rememberCredentials = false;
 
-        string fileName = V3.FileHelper.GetFileName(Output.FileName, Output.FileFormat, ImageData);
+        string fileName = FileHelper.GetFileName(Output.FileName, ImageData);
 
         while (true)
         {
@@ -150,7 +153,7 @@ namespace BS.Output.DoneDone
 
             if (credentials.ShowDialog() != true)
             {
-              return new V3.SendResult(V3.Result.Canceled);
+              return new SendResult(Result.Canceled);
             }
 
             userName = credentials.UserName;
@@ -168,7 +171,7 @@ namespace BS.Output.DoneDone
               showLogin = true;
               continue;
             case ResultStatus.Failed:
-              return new V3.SendResult(V3.Result.Failed, projectsResult.FailedMessage);
+              return new SendResult(Result.Failed, projectsResult.FailedMessage);
           }
 
           GetPriorityLevelsResult priorityLevelsResult = await DoneDoneProxy.GetPriorityLevels(Output.Url, userName, password);
@@ -180,7 +183,7 @@ namespace BS.Output.DoneDone
               showLogin = true;
               continue;
             case ResultStatus.Failed:
-              return new V3.SendResult(V3.Result.Failed, priorityLevelsResult.FailedMessage);
+              return new SendResult(Result.Failed, priorityLevelsResult.FailedMessage);
           }
 
           // Show send window
@@ -191,12 +194,12 @@ namespace BS.Output.DoneDone
 
           if (!send.ShowDialog() == true)
           {
-            return new V3.SendResult(V3.Result.Canceled);
+            return new SendResult(Result.Canceled);
           }
 
-          string fullFileName = String.Format("{0}.{1}", send.FileName, V3.FileHelper.GetFileExtention(Output.FileFormat));
-          string fileMimeType = V3.FileHelper.GetMimeType(Output.FileFormat);
-          byte[] fileBytes = V3.FileHelper.GetFileBytes(Output.FileFormat, ImageData);
+          string fullFileName = String.Format("{0}.{1}", send.FileName, FileHelper.GetFileExtention(Output.FileFormat));
+          string fileMimeType = FileHelper.GetMimeType(Output.FileFormat);
+          byte[] fileBytes = FileHelper.GetFileBytes(Output.FileFormat, ImageData);
 
           int issueID;
           int priorityLevelID;
@@ -216,7 +219,7 @@ namespace BS.Output.DoneDone
                 showLogin = true;
                 continue;
               case ResultStatus.Failed:
-                return new V3.SendResult(V3.Result.Failed, createIssueResult.FailedMessage);
+                return new SendResult(Result.Failed, createIssueResult.FailedMessage);
             }
 
             issueID = createIssueResult.IssueID;
@@ -238,7 +241,7 @@ namespace BS.Output.DoneDone
                 showLogin = true;
                 continue;
               case ResultStatus.Failed:
-                return new V3.SendResult(V3.Result.Failed, createIssueCommentResult.FailedMessage);
+                return new SendResult(Result.Failed, createIssueCommentResult.FailedMessage);
             }
 
             issueID = send.IssueID;
@@ -252,29 +255,29 @@ namespace BS.Output.DoneDone
           // Open issue in browser
           if (Output.OpenItemInBrowser)
           {
-            V3.WebHelper.OpenUrl(String.Format("{0}/issuetracker/projects/{1}/issues/{2}",Output.Url, send.ProjectID, issueID));
+            WebHelper.OpenUrl(String.Format("{0}/issuetracker/projects/{1}/issues/{2}",Output.Url, send.ProjectID, issueID));
           }
                              
-          return new V3.SendResult(V3.Result.Success,
-                                    new Output(Output.Name,
-                                               Output.Url,
-                                               (rememberCredentials) ? userName : Output.UserName,
-                                               (rememberCredentials) ? password : Output.Password,
-                                               Output.FileName,
-                                               Output.FileFormat,
-                                               Output.OpenItemInBrowser,
-                                               send.ProjectID,
-                                               priorityLevelID,
-                                               fixerID,
-                                               testerID,
-                                               issueID));
+          return new SendResult(Result.Success,
+                                new Output(Output.Name,
+                                            Output.Url,
+                                            (rememberCredentials) ? userName : Output.UserName,
+                                            (rememberCredentials) ? password : Output.Password,
+                                            Output.FileName,
+                                            Output.FileFormat,
+                                            Output.OpenItemInBrowser,
+                                            send.ProjectID,
+                                            priorityLevelID,
+                                            fixerID,
+                                            testerID,
+                                            issueID));
           
         }
 
       }
       catch (Exception ex)
       {
-        return new V3.SendResult(V3.Result.Failed, ex.Message);
+        return new SendResult(Result.Failed, ex.Message);
       }
 
     }

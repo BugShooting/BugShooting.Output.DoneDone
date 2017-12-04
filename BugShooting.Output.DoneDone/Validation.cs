@@ -5,7 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
 
-namespace BS.Output.DoneDone
+namespace BugShooting.Output.DoneDone
 {
   class Validation
   {

@@ -1,4 +1,6 @@
-﻿namespace BS.Output.DoneDone
+﻿using BS.Plugin.V3.Output;
+
+namespace BugShooting.Output.DoneDone
 {
 
   public class Output: IOutput 

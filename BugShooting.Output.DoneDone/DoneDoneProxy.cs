@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace BS.Output.DoneDone
+namespace BugShooting.Output.DoneDone
 {
 
   internal class DoneDoneProxy
