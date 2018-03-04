@@ -5,6 +5,7 @@ using System.Windows.Forms;
 using BS.Plugin.V3.Output;
 using BS.Plugin.V3.Common;
 using BS.Plugin.V3.Utilities;
+using System.Linq;
 
 namespace BugShooting.Output.DoneDone
 {
@@ -44,7 +45,7 @@ namespace BugShooting.Output.DoneDone
                                  String.Empty, 
                                  String.Empty, 
                                  "Screenshot",
-                                 String.Empty, 
+                                 FileHelper.GetFileFormats().First().ID,
                                  true,
                                  0,
                                  0,
@@ -71,7 +72,7 @@ namespace BugShooting.Output.DoneDone
                           edit.UserName,
                           edit.Password,
                           edit.FileName,
-                          edit.FileFormat,
+                          edit.FileFormatID,
                           edit.OpenItemInBrowser,
                           Output.LastProjectID,
                           Output.LastPriorityLevelID,
@@ -97,7 +98,7 @@ namespace BugShooting.Output.DoneDone
       outputValues.Add("Password",Output.Password, true);
       outputValues.Add("OpenItemInBrowser", Convert.ToString(Output.OpenItemInBrowser));
       outputValues.Add("FileName", Output.FileName);
-      outputValues.Add("FileFormat", Output.FileFormat);
+      outputValues.Add("FileFormatID", Output.FileFormatID.ToString());
       outputValues.Add("LastProjectID", Output.LastProjectID.ToString());
       outputValues.Add("LastPriorityLevelID", Output.LastPriorityLevelID.ToString());
       outputValues.Add("LastFixerID", Output.LastFixerID.ToString());
@@ -115,8 +116,8 @@ namespace BugShooting.Output.DoneDone
                         OutputValues["Url", ""], 
                         OutputValues["UserName", ""],
                         OutputValues["Password", ""], 
-                        OutputValues["FileName", "Screenshot"], 
-                        OutputValues["FileFormat", ""],
+                        OutputValues["FileName", "Screenshot"],
+                        new Guid(OutputValues["FileFormatID", ""]),
                         Convert.ToBoolean(OutputValues["OpenItemInBrowser", Convert.ToString(true)]),
                         Convert.ToInt32(OutputValues["LastProjectID", "0"]),
                         Convert.ToInt32(OutputValues["LastPriorityLevelID", "0"]),
@@ -197,9 +198,11 @@ namespace BugShooting.Output.DoneDone
             return new SendResult(Result.Canceled);
           }
 
-          string fullFileName = String.Format("{0}.{1}", send.FileName, FileHelper.GetFileExtension(Output.FileFormat));
-          string fileMimeType = FileHelper.GetMimeType(Output.FileFormat);
-          byte[] fileBytes = FileHelper.GetFileBytes(Output.FileFormat, ImageData);
+          IFileFormat fileFormat = FileHelper.GetFileFormat(Output.FileFormatID);
+
+          string fullFileName = String.Format("{0}.{1}", send.FileName, fileFormat.FileExtension);
+
+          byte[] fileBytes = FileHelper.GetFileBytes(Output.FileFormatID, ImageData);
 
           int issueID;
           int priorityLevelID;
@@ -210,7 +213,7 @@ namespace BugShooting.Output.DoneDone
           {
 
             // Create issue
-            CreateIssueResult createIssueResult = await DoneDoneProxy.CreateIssue(Output.Url, userName, password, send.ProjectID, send.PriorityLevelID, send.FixerID, send.TesterID, send.IssueTitle, send.Description, fullFileName, fileMimeType, fileBytes);
+            CreateIssueResult createIssueResult = await DoneDoneProxy.CreateIssue(Output.Url, userName, password, send.ProjectID, send.PriorityLevelID, send.FixerID, send.TesterID, send.IssueTitle, send.Description, fullFileName, fileFormat.MimeType, fileBytes);
             switch (createIssueResult.Status)
             {
               case ResultStatus.Success:
@@ -232,7 +235,7 @@ namespace BugShooting.Output.DoneDone
           {
            
             // Add attachment to issue
-            CreateIssueCommentResult createIssueCommentResult = await DoneDoneProxy.CreateIssueComment(Output.Url, userName, password, send.ProjectID, send.IssueID, send.Comment, fullFileName, fileMimeType, fileBytes);
+            CreateIssueCommentResult createIssueCommentResult = await DoneDoneProxy.CreateIssueComment(Output.Url, userName, password, send.ProjectID, send.IssueID, send.Comment, fullFileName, fileFormat.MimeType, fileBytes);
             switch (createIssueCommentResult.Status)
             {
               case ResultStatus.Success:
@@ -264,7 +267,7 @@ namespace BugShooting.Output.DoneDone
                                             (rememberCredentials) ? userName : Output.UserName,
                                             (rememberCredentials) ? password : Output.Password,
                                             Output.FileName,
-                                            Output.FileFormat,
+                                            Output.FileFormatID,
                                             Output.OpenItemInBrowser,
                                             send.ProjectID,
                                             priorityLevelID,

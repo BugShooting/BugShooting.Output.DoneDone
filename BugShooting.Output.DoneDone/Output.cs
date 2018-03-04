@@ -1,4 +1,5 @@
 ﻿using BS.Plugin.V3.Output;
+using System;
 
 namespace BugShooting.Output.DoneDone
 {
@@ -11,7 +12,7 @@ namespace BugShooting.Output.DoneDone
     string userName;
     string password;
     string fileName;
-    string fileFormat;
+    Guid fileFormatID;
     bool openItemInBrowser;
     int lastProjectID;
     int lastPriorityLevelID;
@@ -23,8 +24,8 @@ namespace BugShooting.Output.DoneDone
                   string url, 
                   string userName,
                   string password, 
-                  string fileName, 
-                  string fileFormat,
+                  string fileName,
+                  Guid fileFormatID,
                   bool openItemInBrowser,
                   int lastProjectID,
                   int lastPriorityLevelID,
@@ -37,7 +38,7 @@ namespace BugShooting.Output.DoneDone
       this.userName = userName;
       this.password = password;
       this.fileName = fileName;
-      this.fileFormat = fileFormat;
+      this.fileFormatID = fileFormatID;
       this.openItemInBrowser = openItemInBrowser;
       this.lastProjectID = lastProjectID;
       this.lastPriorityLevelID = lastPriorityLevelID;
@@ -76,9 +77,9 @@ namespace BugShooting.Output.DoneDone
       get { return fileName; }
     }
 
-    public string FileFormat
+    public Guid FileFormatID
     {
-      get { return fileFormat; }
+      get { return fileFormatID; }
     }
 
     public bool OpenItemInBrowser
